@@ -33,10 +33,38 @@ module.exports = function(){
 	});
     }
 
-    function getClientsByStudio(){}
+    function getClientsByStudio(studioId){
+	var inserts = [studioId];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ?", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+
+    function getProspectsByStudio(studioId){
+	var inserts = [studioId, "prospect"];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and clientType = ?", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
 
     //All below functions should get client by respective studio
-    function getClientByPNum(){}
+    function getClientByPNum(studioId, pNum){
+
+    }
 
     function getClientsByEmail(){}
 
@@ -98,7 +126,7 @@ module.exports = function(){
     
 /*----------------START Client Route Handlers----------------*/
 
-    // Handler for getting all studios
+    // Handler for getting all clients
     router.get('/', function (req, res) {
 	const accepted = req.get('Accept');
 	getAllClients()
@@ -121,7 +149,7 @@ module.exports = function(){
 	    });
     });
 
-    // Handler for getting ID specified studio
+    // Handler for getting ID specified client
     router.get('/:ID', function (req, res) {
 	const accepted = req.get('Accept');
 	getClient(req.params.ID)

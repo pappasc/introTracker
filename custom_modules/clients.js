@@ -63,7 +63,17 @@ module.exports = function(){
 
     //All below functions should get client by respective studio
     function getClientByPNum(studioId, pNum){
-
+	var inserts = [studioId, pNum];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and  phoneNumber like '?%'", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
     }
 
     function getClientsByEmail(){}

@@ -47,8 +47,37 @@ module.exports = function(){
 	});
     }
 
-    function getProspectsByStudio(studioId){
-	var inserts = [studioId, "prospect"];
+    //All below functions should get client by respective studio
+    function getClientsBySource(studioId, pSource){
+	var inserts = [studioId, pSource];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and prospectSource = ?", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+
+    function getProspectsBySource(studioId, pSource){
+	var inserts = [studioId, pSource];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and prospectSource = ? and clientType = 'prospect'", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+
+    function getClientsByType(studioId, cType){
+	var inserts = [studioId, cType];
 	return new Promise (function (resolve, reject) {
 	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and clientType = ?", inserts, function(error, results, fields) {
 		if (error) {
@@ -61,11 +90,11 @@ module.exports = function(){
 	});
     }
 
-    //All below functions should get client by respective studio
-    function getClientByPNum(studioId, pNum){
-	var inserts = [studioId, pNum];
+    //THIS NEEDS TO BE FINISHED
+    function getClientsByDateRange(studioId, startDate, endDate){
+	var inserts = [studioId, startDate, endDate];
 	return new Promise (function (resolve, reject) {
-	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and  phoneNumber like '?%'", inserts, function(error, results, fields) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and", inserts, function(error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -75,20 +104,20 @@ module.exports = function(){
 	    });
 	});
     }
-
-    function getClientsByEmail(){}
-
-    function getClientsByFName(){}
-
-    function getClientsByLName(){}
-
-    function getClientsByBothNames(){}
-
-    function getClientsBySource(){}
-
-    function getClientsByType(){}
-
-    function getClientsByDateRange(){}
+    //Primary search function
+    function getClientByWhatever(studioId, uInput){
+	var inserts = [studioId, uInput, uInput, uInput, uInput];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and (firstName like '?%' or lastName like '?%' or phoneNumber like '?%' or emailAddress like '?%')", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
     
     function postClient(studioId, fName, lName, pNum, eAddr, clientType, prospectSource){
 	var inserts = [studioId, fName, lName, pNum, eAddr, clientType, prospectSource];

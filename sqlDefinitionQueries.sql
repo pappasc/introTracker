@@ -165,7 +165,7 @@ create table clientNotes (
        );
        
 create table serverLogs (
-		id int not null AUTO_INCREMENT,
+       id int not null AUTO_INCREMENT,
         staffId int not null,
         dataLog mediumtext not null,
         createdOn datetime not null,

@@ -271,7 +271,7 @@ module.exports = function(){
 	    });
     });
 
-/*----------------END Studio Route Handlers----------------*/
+/*----------------END Studio Route Handlers---------------*/
     
     return router;
 }();

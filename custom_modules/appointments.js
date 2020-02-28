@@ -197,7 +197,7 @@ module.exports = function(){
 	    });
     });
 
-/*----------------END Appointment Route Handlers----------------*/
+/*----------------END Appointment Route Handlers---------------*/
     
     return router;
 }();

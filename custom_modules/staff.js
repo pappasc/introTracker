@@ -444,7 +444,7 @@ module.exports = function(){
 	    });
     });
 
-/*----------------END Staff Route Handlers----------------*/
+/*----------------END Staff Route Handlers---------------*/
     
     return router;
 }();

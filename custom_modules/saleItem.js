@@ -269,7 +269,7 @@ module.exports = function(){
 	    });
     });
 
-/*----------------END SI Route Handlers----------------*/
+/*----------------END SI Route Handlers---------------*/
     
     return router;
 }();

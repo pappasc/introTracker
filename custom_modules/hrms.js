@@ -197,7 +197,7 @@ module.exports = function(){
 	    });
     });
 
-/*----------------END HRM Route Handlers----------------*/
+/*----------------END HRM Route Handlers---------------*/
     
     return router;
 }();

@@ -27,7 +27,7 @@ app.use('/clients', require('./custom_modules/clients.js'));
 app.use('/hrms', require('./custom_modules/hrms.js'));
 app.use('/marketingSource', require('./custom_modules/marketingSource.js'));
 app.use('/saleItem', require('./custom_modules/saleItem.js'));
-app.use('/appointments', require('./custom_modules/appointments.js'));
+//app.use('/appointments', require('./custom_modules/appointments.js'));
 
 //If the user tries navigating to a non-supplied page
 /*app.use(function(req,res){

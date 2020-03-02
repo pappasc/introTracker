@@ -94,7 +94,7 @@ module.exports = function(){
     function getClientsByDateRange(studioId, startDate, endDate){
 	var inserts = [studioId, startDate, endDate];
 	return new Promise (function (resolve, reject) {
-	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and", inserts, function(error, results, fields) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and date(createdOn) between ? and ?", inserts, function(error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -104,8 +104,23 @@ module.exports = function(){
 	    });
 	});
     }
+
+    function getProspectsByDateRange(studioId, startDate, endDate){
+	var inserts = [studioId, startDate, endDate];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and clientType = 'prospect' and date(createdOn) between ? and ?", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+    
     //Primary search function
-    function getClientByWhatever(studioId, uInput){
+    function getClientsByWhatever(studioId, uInput){
 	var inserts = [studioId, uInput, uInput, uInput, uInput];
 	return new Promise (function (resolve, reject) {
 	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and (firstName like '?%' or lastName like '?%' or phoneNumber like '?%' or emailAddress like '?%')", inserts, function(error, results, fields) {
@@ -213,49 +228,161 @@ module.exports = function(){
 
     //Endpoint to get clients by Studio
     router.get('/studio/:studioId', function (req, res) {
-
+	const accepted = req.get('Accept');
+	getClientsByStudio(req.params.studioId)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
     });
 
     //All below routers should get client by respective studio
 
-    //Endpoint to get client by phone number
-    router.get('/studio/:studioId/phone/:pNum', function (req, res) {
-
-    });
-
-    //Endpoint to get client by email
-    router.get('/studio/:studioId/email/:eAddr', function (req, res) {
-
-    });
-
-    //Endpoint to get clients by first name
-    router.get('/studio/:studioId/firstName/:fName', function (req, res) {
-
-    });
-
-    //Endpoint to get clients by last name
-    router.get('/studio/:studioId/lastName/:lName', function (req, res) {
-
-    });
-
-    //Endpoint to get clients by full name
-    router.get('/studio/:studioId/Name/:fName/:lName', function (req, res) {
-
-    });
-
     //Endpoint to get clients by marketing source
     router.get('/studio/:studioId/source/:pSource', function (req, res) {
+	const accepted = req.get('Accept');
+	getClientsBySource(req.params.studioId, req.params.pSource)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
 
+     //Endpoint to get prospects by marketing source
+    router.get('/prospects/studio/:studioId/source/:pSource', function (req, res) {
+	const accepted = req.get('Accept');
+	getProspectsBySource(req.params.studioId, req.params.pSource)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
     });
 
     //Endpoint to get clients by type (prospect, member, etc)
     router.get('/studio/:studioId/type/:cliType', function (req, res) {
-
+	getClientsByType(req.params.studioId, req.params.cliType)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
     });
 
     //Endpoint to get clients created in date range
     router.get('/studio/:studioId/date/:start/:end', function (req, res) {
+	getClientsByDateRange(req.params.studioId, req.params.start, req.params.end)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
 
+    //Endpoint to get prospects created in date range
+    router.get('/prospects/studio/:studioId/date/:start/:end', function (req, res) {
+	getProspectsByDateRange(req.params.studioId, req.params.start, req.params.end)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
+
+    //Endpoint for "searching"
+    router.get('/studio/:studioId/lookup/:qString', function (req, res) {
+	getClientsByWhatever(req.params.studioId, req.params.qString)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
     });
 
     // Handler for creating a client entry

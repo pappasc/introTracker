@@ -120,10 +120,11 @@ module.exports = function(){
     }
     
     //Primary search function
-    function getClientsByWhatever(studioId, uInput){
+    function getClientsByWhatever(studioId, usInput){
+	var uInput = usInput + '%';
 	var inserts = [studioId, uInput, uInput, uInput, uInput];
 	return new Promise (function (resolve, reject) {
-	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and (firstName like '?%' or lastName like '?%' or phoneNumber like '?%' or emailAddress like '?%')", inserts, function(error, results, fields) {
+	    mysql.query("SELECT * FROM `clients` WHERE studioId = ? and (firstName like ? or lastName like ? or phoneNumber like ? or emailAddress like ?)", inserts, function(error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -148,10 +149,10 @@ module.exports = function(){
 	});
     }
 
-    function updateClient(studioId, fName, lName, pNum, eAddr, clientType, prospectSource) {
-	var inserts = [studioId, fName, lName, pNum, eAddr, clientType, prospectSource];
+    function updateClient(studioId, fName, lName, pNum, eAddr, clientType, prospectSource, clientId) {
+	var inserts = [studioId, fName, lName, pNum, eAddr, clientType, prospectSource, clientId];
 	return new Promise (function (resolve, reject) {
-	    mysql.query("UPDATE `client` set studioId = ?, firstName = ?, lastName = ? , phoneNumber = ?, emailAddress = ?, clientType = ?, numVisits = 0, prospectSource = ?,  lastUpdated = CURRENT_TIMESTAMP where id = ?", inserts, function (error, results, fields) {
+	    mysql.query("UPDATE `clients` set studioId = ?, firstName = ?, lastName = ? , phoneNumber = ?, emailAddress = ?, clientType = ?, numVisits = 0, prospectSource = ?, lastUpdated = CURRENT_TIMESTAMP where id = ?", inserts, function (error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -166,6 +167,34 @@ module.exports = function(){
 	var inserts = [clientId];
 	return new Promise (function (resolve, reject) {
 	    mysql.query("DELETE FROM `clients` WHERE id = ?", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve ();
+		}
+	    });
+	});
+    }
+
+    function createReferral(referrerId, referredId) {
+	var inserts = [referrerId, referredId];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("INSERT INTO `referral` (referrerId, referredId, createdOn, lastUpdated) values (?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+
+    function deleteReferral(referrerId, referredId) {
+	var inserts = [referrerId, referredId];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("DELETE FROM `referral` where referrerId = ? and referredId = ?", inserts, function(error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -192,7 +221,7 @@ module.exports = function(){
 		    res.status(406).send('No form acceptable');
 		}
 		else if (accepted === 'application/json') {
-		    res.status(200).send(studio);
+		    res.status(200).send(clients);
 		}
 		else {
 		    res.status(500).send('Something went really wrong.');
@@ -206,7 +235,7 @@ module.exports = function(){
     // Handler for getting ID specified client
     router.get('/:ID', function (req, res) {
 	const accepted = req.get('Accept');
-	getClient(req.params.ID)
+	getClientById(req.params.ID)
 	    .then(client => {
 		if (client.length == 0) {
 		    res.status(404).send('No client found');
@@ -299,6 +328,7 @@ module.exports = function(){
 
     //Endpoint to get clients by type (prospect, member, etc)
     router.get('/studio/:studioId/type/:cliType', function (req, res) {
+	const accepted = req.get('Accept');
 	getClientsByType(req.params.studioId, req.params.cliType)
 	    .then(clients => {
 		if (clients.length == 0) {
@@ -321,6 +351,7 @@ module.exports = function(){
 
     //Endpoint to get clients created in date range
     router.get('/studio/:studioId/date/:start/:end', function (req, res) {
+	const accepted = req.get('Accept');
 	getClientsByDateRange(req.params.studioId, req.params.start, req.params.end)
 	    .then(clients => {
 		if (clients.length == 0) {
@@ -343,6 +374,7 @@ module.exports = function(){
 
     //Endpoint to get prospects created in date range
     router.get('/prospects/studio/:studioId/date/:start/:end', function (req, res) {
+	const accepted = req.get('Accept');
 	getProspectsByDateRange(req.params.studioId, req.params.start, req.params.end)
 	    .then(clients => {
 		if (clients.length == 0) {
@@ -365,6 +397,7 @@ module.exports = function(){
 
     //Endpoint for "searching"
     router.get('/studio/:studioId/lookup/:qString', function (req, res) {
+	const accepted = req.get('Accept');
 	getClientsByWhatever(req.params.studioId, req.params.qString)
 	    .then(clients => {
 		if (clients.length == 0) {
@@ -427,12 +460,12 @@ module.exports = function(){
 	    res.status(415).send('Server only accepts application/json data, you ding dong.');
 	}
 	else {
-	    getClient(req.params.ID).then((client) => {
+	    getClientById(req.params.ID).then((client) => {
 		if (client.length == 0) {
 		    res.status(404).send('Client with that ID not found');
 		}
 		else {
-		    updateClient(req.body.studioId, req.body.firstName, req.body.lastName, req.body.phoneNumber, req.body.emailAddress, req.body.clientType, req.body.prospectSource)
+		    updateClient(req.body.studioId, req.body.firstName, req.body.lastName, req.body.phoneNumber, req.body.emailAddress, req.body.clientType, req.body.prospectSource, req.params.ID)
 			.then(() => {
 			    res.location(req.protocol + "://" + req.get('host') + req.baseUrl + '/' + req.params.ID);
 			    var sendUpdated = {id: client.insertId};
@@ -449,6 +482,37 @@ module.exports = function(){
     // Handler for deleting ID specified client
     router.delete('/:ID', function (req, res) {
 	deleteClient(req.params.ID)
+	    .then(() => {
+		res.status(204).send('No Content');
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
+
+    /* PUT HANDLER HERE FOR GETTING REFERRALS MADE BY A CLIENT - ADD A FUNCTION TOO  */
+
+    // Handler for creating a referral relationship
+    router.put('/:referrerId/referred/:referredId', function (req, res) {
+	if (req.get('content-type') !== 'application/json') {
+	    res.status(415).send('Server only accepts application/json data, you ding dong.');
+	}
+	else {
+	    createReferral(req.params.referrerId, req.params.referredId)
+		.then((referral) => {
+		    res.location(req.protocol + "://" + req.get('host') + req.baseUrl + '/' + req.params.referrerId + 'referrals');
+		    var sendNew = {id: referral.insertId};
+		    res.status(201).send(sendNew);
+		})
+		.catch(error => {
+		    res.status(500).send(error);
+		});
+	}
+    });
+
+    // Handler for deleting a referral relationship
+    router.delete('/:referrerId/referred/:referredId', function (req, res) {
+	deleteReferral(req.params.referrerId, req.params.referredId)
 	    .then(() => {
 		res.status(204).send('No Content');
 	    })

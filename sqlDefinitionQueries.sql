@@ -54,7 +54,7 @@ create table clients (
        );
 
 create table referral (
-       id int not null,
+       id int not null AUTO_INCREMENT,
        referredId int not null,
        referrerId int not null,
        createdOn datetime not null,

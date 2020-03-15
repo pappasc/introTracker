@@ -90,7 +90,6 @@ module.exports = function(){
 	});
     }
 
-    //THIS NEEDS TO BE FINISHED
     function getClientsByDateRange(studioId, startDate, endDate){
 	var inserts = [studioId, startDate, endDate];
 	return new Promise (function (resolve, reject) {
@@ -181,6 +180,34 @@ module.exports = function(){
 	var inserts = [referrerId, referredId];
 	return new Promise (function (resolve, reject) {
 	    mysql.query("INSERT INTO `referral` (referrerId, referredId, createdOn, lastUpdated) values (?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)", inserts, function(error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+    
+    function getReferrals(referrerId) {
+	var inserts = [referrerId];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("select c.id, c.firstName, c.lastName, c.phoneNumber, c.emailAddress, c.clientType, c.numVisits, c.prospectSource, c.createdOn, c.lastUpdated from referral r inner join clients c on r.referredId = c.id where r.referrerId = ?", inserts, function (error, results, fields) {
+		if (error) {
+		    reject (error);
+		}
+		else {
+		    resolve (results);
+		}
+	    });
+	});
+    }
+
+    function getReferredBy(referredId) {
+	var inserts = [referredId];
+	return new Promise (function (resolve, reject) {
+	    mysql.query("select c.id, c.firstName, c.lastName, c.phoneNumber, c.emailAddress, c.clientType, c.numVisits, c.prospectSource, c.createdOn, c.lastUpdated from referral r inner join clients c on r.referrerId = c.id where r.referredId = ?", inserts, function (error, results, fields) {
 		if (error) {
 		    reject (error);
 		}
@@ -491,6 +518,52 @@ module.exports = function(){
     });
 
     /* PUT HANDLER HERE FOR GETTING REFERRALS MADE BY A CLIENT - ADD A FUNCTION TOO  */
+
+    // Handler for getting referrals
+    router.get('/:referrerId/referrals', function (req,res) {
+	const accepted = req.get('Accept');
+	getReferrals(req.params.referrerId)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
+
+    // Handler for getting referred by
+    router.get('/:referredId/referrer', function (req,res) {
+	const accepted = req.get('Accept');
+	getReferredBy(req.params.referredId)
+	    .then(clients => {
+		if (clients.length == 0) {
+		    res.status(404).send('No clients found');
+		}
+		else if (accepted !== 'application/json') {
+		    res.status(406).send('No form acceptable');
+		}
+		else if (accepted === 'application/json') {
+		    res.status(200).send(clients);
+		}
+		else {
+		    res.status(500).send('Something went really wrong.');
+		}
+	    })
+	    .catch(error => {
+		res.status(500).send(error);
+	    });
+    });
 
     // Handler for creating a referral relationship
     router.put('/:referrerId/referred/:referredId', function (req, res) {
